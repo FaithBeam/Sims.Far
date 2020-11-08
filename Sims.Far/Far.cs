@@ -8,134 +8,143 @@ namespace Sims.Far
 {
     public class Far
     {
-        public readonly string far;
-        public List<Bmp> bmps = new List<Bmp>();
-        public List<string> paths = new List<string>();
-        public byte[] bytes;
+        private readonly string pathToFar;
+        public string Signature { get; set; }
+        public int Version { get; set; }
+        public int ManifestOffset { get; set; }
+        public List<byte[]> Files { get; set; }
+        public Manifest Manifest { get; set; }
 
-        public Far(string far)
+        public Far(string pathToFar)
         {
-            this.far = far;
+            this.pathToFar = pathToFar;
             ParseFar();
         }
 
         private void ParseFar()
         {
-            bytes = File.ReadAllBytes(this.far);
-            int curByte = bytes[0];
-            int nextByte = bytes[1];
-            int sizeOfBITMAPINFOHEADER;
-            int sizeOfBmpBytes;
-            int endBmp = 0;
-            int i = 0;
-            for (; i < bytes.Length - 2; i++)
+            byte[] bytes = File.ReadAllBytes(this.pathToFar);
+            this.Signature = Encoding.UTF8.GetString(bytes, 0, 8);
+            this.Version = BitConverter.ToInt32(bytes, 8);
+            this.ManifestOffset = BitConverter.ToInt32(bytes, 12);
+            this.Files = new List<byte[]>();
+            this.Manifest = new Manifest
             {
-                // Start of BMP header
-                if (curByte == 66 && nextByte == 77)
-                {
-                    sizeOfBITMAPINFOHEADER = bytes[i - 1 + 14];
-                    // Header validation. BITMAPINFOHEADER will always be 40 so if it isn't, these bytes are not the start of a bmp.
-                    if (sizeOfBITMAPINFOHEADER == 40)
-                    {
-                        sizeOfBmpBytes = BitConverter.ToInt32(new byte[] { bytes[i + 1], bytes[i + 2], bytes[i + 3], bytes[i + 4] }, 0);
-                        endBmp = i - 1 + sizeOfBmpBytes;
-                        this.bmps.Add(new Bmp { StartOffset = i - 1, EndOffset = endBmp });
-                        i = endBmp;
-                    }
-                }
-                curByte = bytes[i];
-                nextByte = bytes[i + 1];
-            }
-            i = endBmp;
+                NumberOfFiles = BitConverter.ToInt32(bytes, this.ManifestOffset),
+                ManifestEntries = new List<ManifestEntry>()
+            };
 
-            // Bytes that represent acceptable ascii characters to create paths
-            var asciiChars = new List<int> { 45, 46, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 92, 95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122 };
-            // Navigate to file names
-            while (!asciiChars.Contains(bytes[i]) && i < bytes.Length) { i++; }
-
-            // Extensions that are found in the .far file. Currently only works with UIGraphics.far.
-            var extensions = new List<string> { ".h", ".rt", ".bmp", ".tga", ".cur" };
-            var sb = new StringBuilder();
-            // Start at the end of all bmps
-            for (; i < bytes.Length; i++)
+            int curOffset = this.ManifestOffset;
+            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
             {
-                curByte = bytes[i];
-                if (asciiChars.Contains(curByte))
-                {
-                    sb.Append(Convert.ToChar(curByte));
-                }
-                else
-                {
-                    // Skip strings that couldn't possible be a file
-                    if (sb.Length > 5)
-                    {
-                        string path = "";
-                        var tmpPath = sb.ToString();
-                        // tmppath may still have dangling characters following the extension: .bmp8, .bmpR, etc. This replaces the tmppath's extension entirely.
-                        foreach (var ext in extensions)
-                        {
-                            if (tmpPath.IndexOf(ext, StringComparison.OrdinalIgnoreCase) > 0)
-                            {
-                                path = tmpPath.Substring(0, tmpPath.IndexOf(".")) + ext;
-                                break;
-                            }
-                        }
-                        if (!string.IsNullOrWhiteSpace(path) && (path.IndexOf(".bmp", StringComparison.OrdinalIgnoreCase) > 0))
-                            paths.Add(path);
-                    }
-                    sb.Clear();
-                }
+                var manifestEntry = ParseManifestEntry(bytes, curOffset + 4);
+                this.Manifest.ManifestEntries.Add(manifestEntry);
+                curOffset += 16 + manifestEntry.FilenameLength;
+
+                var curFile = new byte[manifestEntry.FileLength1];
+                Array.Copy(bytes, manifestEntry.FileOffset, curFile, 0, manifestEntry.FileLength1);
+                this.Files.Add(curFile);
             }
-            // This feels bad
-            paths.Add(sb.ToString());
-            sb.Clear();
         }
 
+        private static ManifestEntry ParseManifestEntry(byte[] bytes, int offset)
+        {
+            var manifestEntry = new ManifestEntry
+            {
+                FileLength1 = BitConverter.ToInt32(bytes, offset),
+                FileLength2 = BitConverter.ToInt32(bytes, offset += 4),
+                FileOffset = BitConverter.ToInt32(bytes, offset += 4),
+                FilenameLength = BitConverter.ToInt32(bytes, offset += 4),
+            };
+            manifestEntry.Filename = Encoding.UTF8.GetString(bytes, offset += 4, manifestEntry.FilenameLength);
+            return manifestEntry;
+        }
+
+        /// <summary>
+        /// Extract all files from the far file.
+        /// </summary>
         public void Extract()
         {
-            for (int j = 0; j < this.paths.Count; j++)
+            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
             {
-                this.bmps[j].Path = this.paths[j];
-                int size = this.bmps[j].EndOffset - this.bmps[j].StartOffset;
-                var curBmp = new byte[size];
-                if (this.paths[j].Contains(@"\"))
-                    Directory.CreateDirectory(@".\" + this.paths[j].Substring(0, this.paths[j].LastIndexOf(@"\")));
-                Array.Copy(this.bytes, this.bmps[j].StartOffset, curBmp, 0, size);
-                File.WriteAllBytes(@".\" + this.bmps[j].Path, curBmp);
+                string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
+                if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+                File.WriteAllBytes(this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
             }
         }
 
+        /// <summary>
+        /// Extract files from the far file with an inclusive filter. Only files in this enumerable will be extracted.
+        /// </summary>
+        /// <param name="filter">Inclusive filter.</param>
+        public void Extract(IEnumerable<string> filter)
+        {
+            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
+            {
+                if (!filter.Contains(this.Manifest.ManifestEntries[i].Filename))
+                    continue;
+
+                string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
+                if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+                File.WriteAllBytes(this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
+            }
+        }
+
+        /// <summary>
+        /// Extract all files from the far file to a specified directory.
+        /// </summary>
+        /// <param name="outputDirectory">The directory to extract files to.</param>
         public void Extract(string outputDirectory)
         {
-            if (!outputDirectory.EndsWith(@"\")) outputDirectory += @"\";
-            for (int j = 0; j < this.paths.Count; j++)
+            if (!outputDirectory.EndsWith(@"\"))
+                outputDirectory += @"\";
+
+            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
             {
-                this.bmps[j].Path = this.paths[j];
-                int size = this.bmps[j].EndOffset - this.bmps[j].StartOffset;
-                var curBmp = new byte[size];
-                if (this.paths[j].Contains(@"\"))
-                    Directory.CreateDirectory(outputDirectory + this.paths[j].Substring(0, this.paths[j].LastIndexOf(@"\")));
-                Array.Copy(this.bytes, this.bmps[j].StartOffset, curBmp, 0, size);
-                File.WriteAllBytes(outputDirectory + this.bmps[j].Path, curBmp);
+                string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
+                if (!string.IsNullOrWhiteSpace(outputDirectory + dir) && !Directory.Exists(outputDirectory + dir))
+                    Directory.CreateDirectory(outputDirectory + dir);
+                File.WriteAllBytes(outputDirectory + this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
             }
         }
 
-        public void Extract(string outputDirectory, IEnumerable<string> filesToExtract)
+        /// <summary>
+        /// Extract files from the far file with an inclusive filter to the specified directory. 
+        /// </summary>
+        /// <param name="outputDirectory">The directory to extract files to.</param>
+        /// <param name="filter">Inclusive filter.</param>
+        public void Extract(string outputDirectory, IEnumerable<string> filter)
         {
-            if (!outputDirectory.EndsWith(@"\")) outputDirectory += @"\";
-            for (int j = 0; j < this.paths.Count; j++)
+            if (!outputDirectory.EndsWith(@"\"))
+                outputDirectory += @"\";
+
+            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
             {
-                if (filesToExtract.Contains(this.paths[j], StringComparer.OrdinalIgnoreCase))
-                {
-                    this.bmps[j].Path = this.paths[j];
-                    int size = this.bmps[j].EndOffset - this.bmps[j].StartOffset;
-                    var curBmp = new byte[size];
-                    if (this.paths[j].Contains(@"\"))
-                        Directory.CreateDirectory(outputDirectory + this.paths[j].Substring(0, this.paths[j].LastIndexOf(@"\")));
-                    Array.Copy(this.bytes, this.bmps[j].StartOffset, curBmp, 0, size);
-                    File.WriteAllBytes(outputDirectory + this.bmps[j].Path, curBmp);
-                }
+                if (!filter.Contains(this.Manifest.ManifestEntries[i].Filename))
+                    continue;
+
+                string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
+                if (!string.IsNullOrWhiteSpace(outputDirectory + dir) && !Directory.Exists(outputDirectory + dir))
+                    Directory.CreateDirectory(outputDirectory + dir);
+                File.WriteAllBytes(outputDirectory + this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
             }
         }
+    }
+
+    public class Manifest
+    {
+        public int NumberOfFiles { get; set; }
+        public List<ManifestEntry> ManifestEntries { get; set; }
+    }
+
+    public class ManifestEntry
+    {
+        public int FileLength1 { get; set; }
+        public int FileLength2 { get; set; }
+        public int FileOffset { get; set; }
+        public int FilenameLength { get; set; }
+        public string Filename { get; set; }
     }
 }

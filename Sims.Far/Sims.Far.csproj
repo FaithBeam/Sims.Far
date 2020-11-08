@@ -2,12 +2,16 @@
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp2.1;net40;netstandard2.0</TargetFrameworks>
-    <Version>0.2.0</Version>
+    <Version>1.0.0</Version>
     <Authors>FaithBeam</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/FaithBeam/Sims.Far</PackageProjectUrl>
     <RepositoryUrl>https://github.com/FaithBeam/Sims.Far</RepositoryUrl>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DocumentationFile>Sims.Far\Sims.Far.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Sims.Far</name>
+    </assembly>
+    <members>
+        <member name="M:Sims.Far.Far.Extract">
+            <summary>
+            Extract all files from the far file.
+            </summary>
+        </member>
+        <member name="M:Sims.Far.Far.Extract(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Extract files from the far file with an inclusive filter. Only files in this enumerable will be extracted.
+            </summary>
+            <param name="filter">Inclusive filter.</param>
+        </member>
+        <member name="M:Sims.Far.Far.Extract(System.String)">
+            <summary>
+            Extract all files from the far file to a specified directory.
+            </summary>
+            <param name="outputDirectory">The directory to extract files to.</param>
+        </member>
+        <member name="M:Sims.Far.Far.Extract(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Extract files from the far file with an inclusive filter to the specified directory. 
+            </summary>
+            <param name="outputDirectory">The directory to extract files to.</param>
+            <param name="filter">Inclusive filter.</param>
+        </member>
+    </members>
+</doc>
