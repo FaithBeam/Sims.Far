@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DocumentationFile>Sims.Far\Sims.Far.xml</DocumentationFile>
+    <DocumentationFile>Sims.Far.xml</DocumentationFile>
     <Description>A library to manipulate The Sims 1 .far files.</Description>
   </PropertyGroup>
 
