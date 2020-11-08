@@ -1,4 +1,5 @@
 # Sims.Far
+
 A library to manipulate The Sims 1 .far files.
 
 ## Installation
@@ -8,6 +9,7 @@ You can install Sims.Far as a nupkg from nuget.org.
 ## Usage
 
 Extracting UIGraphics.far:
+
 ```cs
 using Sims.Far;
 
@@ -19,6 +21,7 @@ void main()
 ```
 
 Extracting UIGraphics.far to a relative UIGraphics folder:
+
 ```cs
 using Sims.Far;
 
@@ -30,6 +33,7 @@ void main()
 ```
 
 Extracting UIGraphics.far with an inclusive filter:
+
 ```cs
 using Sims.Far;
 
@@ -42,6 +46,7 @@ void main()
 ```
 
 Extracting UIGraphics.far with an inclusive filter to a specified directory:
+
 ```cs
 using Sims.Far;
 
