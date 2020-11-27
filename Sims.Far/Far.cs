@@ -61,74 +61,43 @@ namespace Sims.Far
         }
 
         /// <summary>
-        /// Extract all files from the far file.
+        /// Extract files from the far file.
         /// </summary>
-        public void Extract()
+        /// <param name="outputDirectory">The directory to extract the files to. Otherwise it will extract them at the current directory.</param>
+        /// <param name="filter">An inclusive filter. Use this if you want to extract only certain files from the far. Entries must be exact.</param>
+        /// <param name="preserveDirectories">Whether or not to create the directories from a filename. If a filename was Community\Bus_loadscreen_800x600.bmp, Community\ would or wouldn't be created depending on this parameter. true = create it, false = strip it.</param>
+        public void Extract(string outputDirectory = "", IEnumerable<string> filter = null, bool preserveDirectories = true)
         {
-            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
-            {
-                string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
-                if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-                File.WriteAllBytes(this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
-            }
-        }
+            // Create an empty list if one isn't supplied by the user
+            filter = filter ?? new List<string>();
 
-        /// <summary>
-        /// Extract files from the far file with an inclusive filter. Only files in this enumerable will be extracted.
-        /// </summary>
-        /// <param name="filter">Inclusive filter.</param>
-        public void Extract(IEnumerable<string> filter)
-        {
+            // Add directory separator if the output directory doesn't have one at the end and create it.
+            if (!string.IsNullOrWhiteSpace(outputDirectory) && !outputDirectory.EndsWith(Path.DirectorySeparatorChar.ToString())){
+                outputDirectory += Path.DirectorySeparatorChar;
+                Directory.CreateDirectory(outputDirectory);
+            }
+
+            // Loop through the files in the far file
             for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
             {
-                if (!filter.Contains(this.Manifest.ManifestEntries[i].Filename))
+                // Skip files that are not in the filter. An empty filter is ignored.
+                if (filter.Count() > 0 && !filter.Contains(this.Manifest.ManifestEntries[i].Filename))
                     continue;
 
-                string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
-                if (!string.IsNullOrWhiteSpace(dir) && !Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-                File.WriteAllBytes(this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
-            }
-        }
+                if (preserveDirectories)
+                {
+                    // Get the directory to this file and create it
+                    string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
+                    if (!string.IsNullOrWhiteSpace(outputDirectory + dir) && !Directory.Exists(dir))
+                        Directory.CreateDirectory(outputDirectory + dir);
 
-        /// <summary>
-        /// Extract all files from the far file to a specified directory.
-        /// </summary>
-        /// <param name="outputDirectory">The directory to extract files to.</param>
-        public void Extract(string outputDirectory)
-        {
-            if (!outputDirectory.EndsWith(@"\"))
-                outputDirectory += @"\";
-
-            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
-            {
-                string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
-                if (!string.IsNullOrWhiteSpace(outputDirectory + dir) && !Directory.Exists(outputDirectory + dir))
-                    Directory.CreateDirectory(outputDirectory + dir);
-                File.WriteAllBytes(outputDirectory + this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
-            }
-        }
-
-        /// <summary>
-        /// Extract files from the far file with an inclusive filter to the specified directory. 
-        /// </summary>
-        /// <param name="outputDirectory">The directory to extract files to.</param>
-        /// <param name="filter">Inclusive filter.</param>
-        public void Extract(string outputDirectory, IEnumerable<string> filter)
-        {
-            if (!outputDirectory.EndsWith(@"\"))
-                outputDirectory += @"\";
-
-            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
-            {
-                if (!filter.Contains(this.Manifest.ManifestEntries[i].Filename))
-                    continue;
-
-                string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
-                if (!string.IsNullOrWhiteSpace(outputDirectory + dir) && !Directory.Exists(outputDirectory + dir))
-                    Directory.CreateDirectory(outputDirectory + dir);
-                File.WriteAllBytes(outputDirectory + this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
+                    // Write the file
+                    File.WriteAllBytes(outputDirectory + this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
+                }
+                else {
+                    // Write the file without its directory. If internally a filename was "Community\Bus_loadscreen_800x600.bmp", it would be created without the Community folder
+                    File.WriteAllBytes(outputDirectory + Path.GetFileName(this.Manifest.ManifestEntries[i].Filename), this.Files[i]);
+                }
             }
         }
     }

@@ -4,29 +4,13 @@
         <name>Sims.Far</name>
     </assembly>
     <members>
-        <member name="M:Sims.Far.Far.Extract">
+        <member name="M:Sims.Far.Far.Extract(System.String,System.Collections.Generic.IEnumerable{System.String},System.Boolean)">
             <summary>
-            Extract all files from the far file.
+            Extract files from the far file.
             </summary>
-        </member>
-        <member name="M:Sims.Far.Far.Extract(System.Collections.Generic.IEnumerable{System.String})">
-            <summary>
-            Extract files from the far file with an inclusive filter. Only files in this enumerable will be extracted.
-            </summary>
-            <param name="filter">Inclusive filter.</param>
-        </member>
-        <member name="M:Sims.Far.Far.Extract(System.String)">
-            <summary>
-            Extract all files from the far file to a specified directory.
-            </summary>
-            <param name="outputDirectory">The directory to extract files to.</param>
-        </member>
-        <member name="M:Sims.Far.Far.Extract(System.String,System.Collections.Generic.IEnumerable{System.String})">
-            <summary>
-            Extract files from the far file with an inclusive filter to the specified directory. 
-            </summary>
-            <param name="outputDirectory">The directory to extract files to.</param>
-            <param name="filter">Inclusive filter.</param>
+            <param name="outputDirectory">The directory to extract the files to. Otherwise it will extract them at the current directory.</param>
+            <param name="filter">An inclusive filter. Use this if you want to extract only certain files from the far. Entries must be exact.</param>
+            <param name="preserveDirectories">Whether or not to create the directories from a filename. If a filename was Community\Bus_loadscreen_800x600.bmp, Community\ would or wouldn't be created depending on this parameter. true = create it, false = strip it.</param>
         </member>
     </members>
 </doc>
