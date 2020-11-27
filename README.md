@@ -28,7 +28,7 @@ using Sims.Far;
 void main()
 {
   var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
-  far.Extract(@"UIGraphics\");
+  far.Extract(outputDirectory: @"UIGraphics\");
 }
 ```
 
@@ -41,7 +41,7 @@ void main()
 {
   var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
   var far = new Far();
-  far.Extract(myFiles);
+  far.Extract(filter: myFiles);
 }
 ```
 
@@ -54,7 +54,20 @@ void main()
 {
   var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
   var far = new Far();
-  far.Extract("UIGraphics", myFiles);
+  far.Extract(outputDirectory: "UIGraphics", filter: myFiles);
+}
+```
+
+Extracting UIGraphics.far with an inclusive filter to a specified directory without the files relative folders:
+
+```cs
+using Sims.Far;
+
+void main()
+{
+  var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
+  var far = new Far();
+  far.Extract(outputDirectory: "UIGraphics", filter: myFiles, preserveDirectories: false);
 }
 ```
 
