@@ -16,6 +16,7 @@ using Sims.Far;
 void main()
 {
   var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
+  far.ParseFar();
   far.Extract();
 }
 ```
@@ -28,6 +29,7 @@ using Sims.Far;
 void main()
 {
   var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
+  far.ParseFar();
   far.Extract(outputDirectory: @"UIGraphics\");
 }
 ```
@@ -41,6 +43,7 @@ void main()
 {
   var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
   var far = new Far();
+  far.ParseFar();
   far.Extract(filter: myFiles);
 }
 ```
@@ -54,6 +57,7 @@ void main()
 {
   var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
   var far = new Far();
+  far.ParseFar();
   far.Extract(outputDirectory: "UIGraphics", filter: myFiles);
 }
 ```
@@ -67,6 +71,7 @@ void main()
 {
   var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
   var far = new Far();
+  far.ParseFar();
   far.Extract(outputDirectory: "UIGraphics", filter: myFiles, preserveDirectories: false);
 }
 ```
