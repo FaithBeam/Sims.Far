@@ -6,57 +6,94 @@ using System.Text;
 
 namespace Sims.Far
 {
+    /// <summary>
+    /// The FAR format (.far files) are used to bundle (archive) multiple files together. All numeric values in the header and manifest are stored in little-endian order(least significant byte first).
+    /// </summary>
     public class Far
     {
-        private readonly string pathToFar;
+        private readonly string _pathToFar;
+        /// <summary>
+        /// The signature is an eight-byte string, consisting literally of "FAR!byAZ" (without the quotes).
+        /// </summary>
         public string Signature { get; set; }
+        /// <summary>
+        /// The version is always one.
+        /// </summary>
         public int Version { get; set; }
+        /// <summary>
+        /// The manifest offset is the byte offset from the beginning of the file to the manifest.
+        /// The contents of the archived files are simply concatenated together without any other structure or padding.Caveat: all of the files observed have been a multiple of four in length, so it's possible that the files may be padded to a two-byte or four-byte boundary and the case has simply never been encountered.
+        /// </summary>
         public int ManifestOffset { get; set; }
-        public List<byte[]> Files { get; set; }
+        /// <summary>
+        /// The manifest contains a count of the number of archived files, followed by an entry for each file. In all of the examples examined the order of the entries matches the order of the archived files, but whether this is a firm requirement or not is unknown.
+        /// </summary>
         public Manifest Manifest { get; set; }
 
+        /// <summary>
+        /// The Far constructor.
+        /// </summary>
+        /// <param name="pathToFar">The path to the far file.</param>
         public Far(string pathToFar)
         {
-            this.pathToFar = pathToFar;
-            ParseFar();
+            _pathToFar = pathToFar;
         }
 
-        private void ParseFar()
+        /// <summary>
+        /// This method parses the far file for contents.
+        /// </summary>
+        public void ParseFar()
         {
-            byte[] bytes = File.ReadAllBytes(this.pathToFar);
-            this.Signature = Encoding.UTF8.GetString(bytes, 0, 8);
-            this.Version = BitConverter.ToInt32(bytes, 8);
-            this.ManifestOffset = BitConverter.ToInt32(bytes, 12);
-            this.Files = new List<byte[]>();
-            this.Manifest = new Manifest
+            using (var fs = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read))
             {
-                NumberOfFiles = BitConverter.ToInt32(bytes, this.ManifestOffset),
-                ManifestEntries = new List<ManifestEntry>()
-            };
+                var bytes = new byte[8];
+                fs.Read(bytes, 0, 8);
+                Signature = Encoding.UTF8.GetString(bytes);
 
-            int curOffset = this.ManifestOffset;
-            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
-            {
-                var manifestEntry = ParseManifestEntry(bytes, curOffset + 4);
-                this.Manifest.ManifestEntries.Add(manifestEntry);
-                curOffset += 16 + manifestEntry.FilenameLength;
+                bytes = new byte[4];
+                fs.Read(bytes, 0, 4);
+                Version = BitConverter.ToInt32(bytes, 0);
+                
+                fs.Read(bytes, 0, 4);
+                ManifestOffset = BitConverter.ToInt32(bytes, 0);
 
-                var curFile = new byte[manifestEntry.FileLength1];
-                Array.Copy(bytes, manifestEntry.FileOffset, curFile, 0, manifestEntry.FileLength1);
-                this.Files.Add(curFile);
+                fs.Seek(ManifestOffset, SeekOrigin.Begin);
+                fs.Read(bytes, 0, 4);
+                Manifest = new Manifest
+                {
+                    NumberOfFiles = BitConverter.ToInt32(bytes, 0),
+                    ManifestEntries = new List<ManifestEntry>()
+                };
+
+                for (int i = 0; i < Manifest.NumberOfFiles; i++)
+                {
+                    var manifestEntry = ParseManifestEntry(fs);
+                    Manifest.ManifestEntries.Add(manifestEntry);
+                }
             }
         }
 
-        private static ManifestEntry ParseManifestEntry(byte[] bytes, int offset)
+        private static ManifestEntry ParseManifestEntry(FileStream fs)
         {
-            var manifestEntry = new ManifestEntry
-            {
-                FileLength1 = BitConverter.ToInt32(bytes, offset),
-                FileLength2 = BitConverter.ToInt32(bytes, offset += 4),
-                FileOffset = BitConverter.ToInt32(bytes, offset += 4),
-                FilenameLength = BitConverter.ToInt32(bytes, offset += 4),
-            };
-            manifestEntry.Filename = Encoding.UTF8.GetString(bytes, offset += 4, manifestEntry.FilenameLength);
+            var bytes = new byte[4];
+            var manifestEntry = new ManifestEntry();
+
+            fs.Read(bytes, 0, 4);
+            manifestEntry.FileLength1 = BitConverter.ToInt32(bytes, 0);
+
+            fs.Read(bytes, 0, 4);
+            manifestEntry.FileLength2 = BitConverter.ToInt32(bytes, 0);
+
+            fs.Read(bytes, 0, 4);
+            manifestEntry.FileOffset = BitConverter.ToInt32(bytes, 0);
+
+            fs.Read(bytes, 0, 4);
+            manifestEntry.FilenameLength = BitConverter.ToInt32(bytes, 0);
+
+            bytes = new byte[manifestEntry.FilenameLength];
+            fs.Read(bytes, 0, manifestEntry.FilenameLength);
+            manifestEntry.Filename = Encoding.UTF8.GetString(bytes);
+
             return manifestEntry;
         }
 
@@ -68,52 +105,83 @@ namespace Sims.Far
         /// <param name="preserveDirectories">Whether or not to create the directories from a filename. If a filename was Community\Bus_loadscreen_800x600.bmp, Community\ would or wouldn't be created depending on this parameter. true = create it, false = strip it.</param>
         public void Extract(string outputDirectory = "", IEnumerable<string> filter = null, bool preserveDirectories = true)
         {
-            // Create an empty list if one isn't supplied by the user
-            filter = filter ?? new List<string>();
-
-            // Add directory separator if the output directory doesn't have one at the end and create it.
-            if (!string.IsNullOrWhiteSpace(outputDirectory) && !outputDirectory.EndsWith(Path.DirectorySeparatorChar.ToString())){
-                outputDirectory += Path.DirectorySeparatorChar;
+            if (!string.IsNullOrWhiteSpace(outputDirectory))
                 Directory.CreateDirectory(outputDirectory);
-            }
 
-            // Loop through the files in the far file
-            for (int i = 0; i < this.Manifest.NumberOfFiles; i++)
+            // Create a default filter if one wasn't supplied
+            filter = filter ?? new string[0];
+
+            using (var fs = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read))
             {
-                // Skip files that are not in the filter. An empty filter is ignored.
-                if (filter.Count() > 0 && !filter.Contains(this.Manifest.ManifestEntries[i].Filename))
-                    continue;
-
-                if (preserveDirectories)
+                foreach (var entry in Manifest.ManifestEntries)
                 {
-                    // Get the directory to this file and create it
-                    string dir = Path.GetDirectoryName(this.Manifest.ManifestEntries[i].Filename);
-                    if (!string.IsNullOrWhiteSpace(outputDirectory + dir) && !Directory.Exists(dir))
-                        Directory.CreateDirectory(outputDirectory + dir);
+                    if (filter.Count() > 0 && !filter.Contains(entry.Filename, StringComparer.OrdinalIgnoreCase))
+                        continue;
 
-                    // Write the file
-                    File.WriteAllBytes(outputDirectory + this.Manifest.ManifestEntries[i].Filename, this.Files[i]);
-                }
-                else {
-                    // Write the file without its directory. If internally a filename was "Community\Bus_loadscreen_800x600.bmp", it would be created without the Community folder
-                    File.WriteAllBytes(outputDirectory + Path.GetFileName(this.Manifest.ManifestEntries[i].Filename), this.Files[i]);
+                    if (preserveDirectories && entry.Filename.Contains(Path.DirectorySeparatorChar))
+                        Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(outputDirectory, entry.Filename)));
+
+                    var bytes = new byte[entry.FileLength1];
+                    fs.Seek(entry.FileOffset, SeekOrigin.Begin);
+                    fs.Read(bytes, 0, entry.FileLength1);
+                    if (preserveDirectories)
+                    {
+                        using (var file = new FileStream(Path.Combine(outputDirectory, entry.Filename), FileMode.Create, FileAccess.Write))
+                        {
+                            file.Write(bytes, 0, entry.FileLength1);
+                        }
+                    }
+                    else
+                    {
+                        using (var file = new FileStream(Path.Combine(outputDirectory, Path.GetFileName(entry.Filename)), FileMode.Create, FileAccess.Write))
+                        {
+                            file.Write(bytes, 0, entry.FileLength1);
+                        }
+                    }
                 }
             }
         }
     }
 
+    /// <summary>
+    /// The manifest contains a count of the number of archived files, followed by an entry for each file. In all of the examples examined the order of the entries matches the order of the archived files, but whether this is a firm requirement or not is unknown.
+    /// </summary>
     public class Manifest
     {
+        /// <summary>
+        /// The number of files in the far file.
+        /// </summary>
         public int NumberOfFiles { get; set; }
+        /// <summary>
+        /// A list of Manifest Entries in the far file.
+        /// </summary>
         public List<ManifestEntry> ManifestEntries { get; set; }
     }
 
+    /// <summary>
+    /// A manifest entry containing the first file length, second file length, file offset, file name length, and file name.
+    /// </summary>
     public class ManifestEntry
     {
+        /// <summary>
+        /// The file length is stored twice. Perhaps this is because some variant of FAR files supports compressed data and the fields would hold the compressed and uncompressed sizes, but this is pure speculation. The safest thing to do is to leave the fields identical.
+        /// </summary>
         public int FileLength1 { get; set; }
+        /// <summary>
+        /// The file length is stored twice. Perhaps this is because some variant of FAR files supports compressed data and the fields would hold the compressed and uncompressed sizes, but this is pure speculation. The safest thing to do is to leave the fields identical.
+        /// </summary>
         public int FileLength2 { get; set; }
-        public int FileOffset { get; set; }
+        /// <summary>
+        /// The file offset is the byte offset from the beginning of the FAR file to the archived file.
+        /// </summary>
+        public long FileOffset { get; set; }
+        /// <summary>
+        /// The filename length is the number of bytes in the filename. Filenames are stored without a terminating null. For example, the filename "foo" would have a filename length of three and the entry would be nineteen bytes long in total.
+        /// </summary>
         public int FilenameLength { get; set; }
+        /// <summary>
+        /// The name of the file. This can include directories.
+        /// </summary>
         public string Filename { get; set; }
     }
 }

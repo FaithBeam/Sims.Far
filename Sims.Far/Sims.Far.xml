@@ -4,6 +4,43 @@
         <name>Sims.Far</name>
     </assembly>
     <members>
+        <member name="T:Sims.Far.Far">
+            <summary>
+            The FAR format (.far files) are used to bundle (archive) multiple files together. All numeric values in the header and manifest are stored in little-endian order(least significant byte first).
+            </summary>
+        </member>
+        <member name="P:Sims.Far.Far.Signature">
+            <summary>
+            The signature is an eight-byte string, consisting literally of "FAR!byAZ" (without the quotes).
+            </summary>
+        </member>
+        <member name="P:Sims.Far.Far.Version">
+            <summary>
+            The version is always one.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.Far.ManifestOffset">
+            <summary>
+            The manifest offset is the byte offset from the beginning of the file to the manifest.
+            The contents of the archived files are simply concatenated together without any other structure or padding.Caveat: all of the files observed have been a multiple of four in length, so it's possible that the files may be padded to a two-byte or four-byte boundary and the case has simply never been encountered.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.Far.Manifest">
+            <summary>
+            The manifest contains a count of the number of archived files, followed by an entry for each file. In all of the examples examined the order of the entries matches the order of the archived files, but whether this is a firm requirement or not is unknown.
+            </summary>
+        </member>
+        <member name="M:Sims.Far.Far.#ctor(System.String)">
+            <summary>
+            The Far constructor.
+            </summary>
+            <param name="pathToFar">The path to the far file.</param>
+        </member>
+        <member name="M:Sims.Far.Far.ParseFar">
+            <summary>
+            This method parses the far file for contents.
+            </summary>
+        </member>
         <member name="M:Sims.Far.Far.Extract(System.String,System.Collections.Generic.IEnumerable{System.String},System.Boolean)">
             <summary>
             Extract files from the far file.
@@ -11,6 +48,51 @@
             <param name="outputDirectory">The directory to extract the files to. Otherwise it will extract them at the current directory.</param>
             <param name="filter">An inclusive filter. Use this if you want to extract only certain files from the far. Entries must be exact.</param>
             <param name="preserveDirectories">Whether or not to create the directories from a filename. If a filename was Community\Bus_loadscreen_800x600.bmp, Community\ would or wouldn't be created depending on this parameter. true = create it, false = strip it.</param>
+        </member>
+        <member name="T:Sims.Far.Manifest">
+            <summary>
+            The manifest contains a count of the number of archived files, followed by an entry for each file. In all of the examples examined the order of the entries matches the order of the archived files, but whether this is a firm requirement or not is unknown.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.Manifest.NumberOfFiles">
+            <summary>
+            The number of files in the far file.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.Manifest.ManifestEntries">
+            <summary>
+            A list of Manifest Entries in the far file.
+            </summary>
+        </member>
+        <member name="T:Sims.Far.ManifestEntry">
+            <summary>
+            A manifest entry containing the first file length, second file length, file offset, file name length, and file name.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.ManifestEntry.FileLength1">
+            <summary>
+            The file length is stored twice. Perhaps this is because some variant of FAR files supports compressed data and the fields would hold the compressed and uncompressed sizes, but this is pure speculation. The safest thing to do is to leave the fields identical.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.ManifestEntry.FileLength2">
+            <summary>
+            The file length is stored twice. Perhaps this is because some variant of FAR files supports compressed data and the fields would hold the compressed and uncompressed sizes, but this is pure speculation. The safest thing to do is to leave the fields identical.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.ManifestEntry.FileOffset">
+            <summary>
+            The file offset is the byte offset from the beginning of the FAR file to the archived file.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.ManifestEntry.FilenameLength">
+            <summary>
+            The filename length is the number of bytes in the filename. Filenames are stored without a terminating null. For example, the filename "foo" would have a filename length of three and the entry would be nineteen bytes long in total.
+            </summary>
+        </member>
+        <member name="P:Sims.Far.ManifestEntry.Filename">
+            <summary>
+            The name of the file. This can include directories.
+            </summary>
         </member>
     </members>
 </doc>
