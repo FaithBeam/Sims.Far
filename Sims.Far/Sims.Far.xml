@@ -30,6 +30,11 @@
             The manifest contains a count of the number of archived files, followed by an entry for each file. In all of the examples examined the order of the entries matches the order of the archived files, but whether this is a firm requirement or not is unknown.
             </summary>
         </member>
+        <member name="P:Sims.Far.Far.FarStream">
+            <summary>
+            A stream of the far file. The consumer is expected to dispose this.
+            </summary>
+        </member>
         <member name="M:Sims.Far.Far.#ctor(System.String)">
             <summary>
             The Far constructor.

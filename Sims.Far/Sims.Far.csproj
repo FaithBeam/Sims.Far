@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
     <Authors>FaithBeam</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/FaithBeam/Sims.Far</PackageProjectUrl>
@@ -13,7 +13,7 @@
   <PropertyGroup>
     <DocumentationFile>Sims.Far.xml</DocumentationFile>
     <Description>A library to manipulate The Sims 1 .far files.</Description>
-    <PackageReleaseNotes>Just target net standard 2.0.</PackageReleaseNotes>
+    <PackageReleaseNotes>Add a public stream instance variable to the far file.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

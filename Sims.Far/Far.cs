@@ -29,6 +29,10 @@ namespace Sims.Far
         /// The manifest contains a count of the number of archived files, followed by an entry for each file. In all of the examples examined the order of the entries matches the order of the archived files, but whether this is a firm requirement or not is unknown.
         /// </summary>
         public Manifest Manifest { get; set; }
+        /// <summary>
+        /// A stream of the far file. The consumer is expected to dispose this.
+        /// </summary>
+        public Stream FarStream { get; set; }
 
         /// <summary>
         /// The Far constructor.
@@ -44,54 +48,52 @@ namespace Sims.Far
         /// </summary>
         public void ParseFar()
         {
-            using (var fs = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read))
+            FarStream = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read);
+            var bytes = new byte[8];
+            FarStream.Read(bytes, 0, 8);
+            Signature = Encoding.UTF8.GetString(bytes);
+
+            bytes = new byte[4];
+            FarStream.Read(bytes, 0, 4);
+            Version = BitConverter.ToInt32(bytes, 0);
+
+            FarStream.Read(bytes, 0, 4);
+            ManifestOffset = BitConverter.ToInt32(bytes, 0);
+
+            FarStream.Seek(ManifestOffset, SeekOrigin.Begin);
+            FarStream.Read(bytes, 0, 4);
+            Manifest = new Manifest
             {
-                var bytes = new byte[8];
-                fs.Read(bytes, 0, 8);
-                Signature = Encoding.UTF8.GetString(bytes);
+                NumberOfFiles = BitConverter.ToInt32(bytes, 0),
+                ManifestEntries = new List<ManifestEntry>()
+            };
 
-                bytes = new byte[4];
-                fs.Read(bytes, 0, 4);
-                Version = BitConverter.ToInt32(bytes, 0);
-                
-                fs.Read(bytes, 0, 4);
-                ManifestOffset = BitConverter.ToInt32(bytes, 0);
-
-                fs.Seek(ManifestOffset, SeekOrigin.Begin);
-                fs.Read(bytes, 0, 4);
-                Manifest = new Manifest
-                {
-                    NumberOfFiles = BitConverter.ToInt32(bytes, 0),
-                    ManifestEntries = new List<ManifestEntry>()
-                };
-
-                for (int i = 0; i < Manifest.NumberOfFiles; i++)
-                {
-                    var manifestEntry = ParseManifestEntry(fs);
-                    Manifest.ManifestEntries.Add(manifestEntry);
-                }
+            for (int i = 0; i < Manifest.NumberOfFiles; i++)
+            {
+                var manifestEntry = ParseManifestEntry();
+                Manifest.ManifestEntries.Add(manifestEntry);
             }
         }
 
-        private static ManifestEntry ParseManifestEntry(FileStream fs)
+        private ManifestEntry ParseManifestEntry()
         {
             var bytes = new byte[4];
             var manifestEntry = new ManifestEntry();
 
-            fs.Read(bytes, 0, 4);
+            FarStream.Read(bytes, 0, 4);
             manifestEntry.FileLength1 = BitConverter.ToInt32(bytes, 0);
 
-            fs.Read(bytes, 0, 4);
+            FarStream.Read(bytes, 0, 4);
             manifestEntry.FileLength2 = BitConverter.ToInt32(bytes, 0);
 
-            fs.Read(bytes, 0, 4);
+            FarStream.Read(bytes, 0, 4);
             manifestEntry.FileOffset = BitConverter.ToInt32(bytes, 0);
 
-            fs.Read(bytes, 0, 4);
+            FarStream.Read(bytes, 0, 4);
             manifestEntry.FilenameLength = BitConverter.ToInt32(bytes, 0);
 
             bytes = new byte[manifestEntry.FilenameLength];
-            fs.Read(bytes, 0, manifestEntry.FilenameLength);
+            FarStream.Read(bytes, 0, manifestEntry.FilenameLength);
             manifestEntry.Filename = Encoding.UTF8.GetString(bytes);
 
             return manifestEntry;
@@ -111,32 +113,29 @@ namespace Sims.Far
             // Create a default filter if one wasn't supplied
             filter = filter ?? new string[0];
 
-            using (var fs = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read))
+            foreach (var entry in Manifest.ManifestEntries)
             {
-                foreach (var entry in Manifest.ManifestEntries)
+                if (filter.Count() > 0 && !filter.Contains(entry.Filename, StringComparer.OrdinalIgnoreCase))
+                    continue;
+
+                if (preserveDirectories && entry.Filename.Contains(Path.DirectorySeparatorChar))
+                    Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(outputDirectory, entry.Filename)));
+
+                var bytes = new byte[entry.FileLength1];
+                FarStream.Seek(entry.FileOffset, SeekOrigin.Begin);
+                FarStream.Read(bytes, 0, entry.FileLength1);
+                if (preserveDirectories)
                 {
-                    if (filter.Count() > 0 && !filter.Contains(entry.Filename, StringComparer.OrdinalIgnoreCase))
-                        continue;
-
-                    if (preserveDirectories && entry.Filename.Contains(Path.DirectorySeparatorChar))
-                        Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(outputDirectory, entry.Filename)));
-
-                    var bytes = new byte[entry.FileLength1];
-                    fs.Seek(entry.FileOffset, SeekOrigin.Begin);
-                    fs.Read(bytes, 0, entry.FileLength1);
-                    if (preserveDirectories)
+                    using (var file = new FileStream(Path.Combine(outputDirectory, entry.Filename), FileMode.Create, FileAccess.Write))
                     {
-                        using (var file = new FileStream(Path.Combine(outputDirectory, entry.Filename), FileMode.Create, FileAccess.Write))
-                        {
-                            file.Write(bytes, 0, entry.FileLength1);
-                        }
+                        file.Write(bytes, 0, entry.FileLength1);
                     }
-                    else
+                }
+                else
+                {
+                    using (var file = new FileStream(Path.Combine(outputDirectory, Path.GetFileName(entry.Filename)), FileMode.Create, FileAccess.Write))
                     {
-                        using (var file = new FileStream(Path.Combine(outputDirectory, Path.GetFileName(entry.Filename)), FileMode.Create, FileAccess.Write))
-                        {
-                            file.Write(bytes, 0, entry.FileLength1);
-                        }
+                        file.Write(bytes, 0, entry.FileLength1);
                     }
                 }
             }
