@@ -30,28 +30,40 @@
             The manifest contains a count of the number of archived files, followed by an entry for each file. In all of the examples examined the order of the entries matches the order of the archived files, but whether this is a firm requirement or not is unknown.
             </summary>
         </member>
-        <member name="P:Sims.Far.Far.FarStream">
-            <summary>
-            A stream of the far file. The consumer is expected to dispose this.
-            </summary>
-        </member>
         <member name="M:Sims.Far.Far.#ctor(System.String)">
             <summary>
             The Far constructor.
             </summary>
             <param name="pathToFar">The path to the far file.</param>
         </member>
-        <member name="M:Sims.Far.Far.ParseFar">
+        <member name="M:Sims.Far.Far.GetBytes(System.String)">
             <summary>
-            This method parses the far file for contents.
+            Return a byte array for a file name in the far. The file name must be exact.
             </summary>
+            <param name="filename">The name of the file in the far.</param>
+            <returns>A byte array of the content in the far.</returns>
         </member>
-        <member name="M:Sims.Far.Far.Extract(System.String,System.Collections.Generic.IEnumerable{System.String},System.Boolean)">
+        <member name="M:Sims.Far.Far.GetBytes(Sims.Far.ManifestEntry)">
             <summary>
-            Extract files from the far file.
+            Return a byte array for the given Manifest entry.
             </summary>
+            <param name="entry"></param>
+            <returns>A byte array of the content in the far.</returns>
+        </member>
+        <member name="M:Sims.Far.Far.Extract(Sims.Far.ManifestEntry,System.String,System.Boolean)">
+            <summary>
+            Extract a file by its manifest entry from the far.
+            </summary>
+            <param name="entry">The manifest entry to extract.</param>
             <param name="outputDirectory">The directory to extract the files to. Otherwise it will extract them at the current directory.</param>
-            <param name="filter">An inclusive filter. Use this if you want to extract only certain files from the far. Entries must be exact.</param>
+            <param name="preserveDirectories">Whether or not to create the directories from a filename. If a filename was Community\Bus_loadscreen_800x600.bmp, Community\ would or wouldn't be created depending on this parameter. true = create it, false = strip it.</param>
+        </member>
+        <member name="M:Sims.Far.Far.Extract(System.String,System.String,System.Boolean)">
+            <summary>
+            Extract a file(s) by its file name in the far. If the the Manifest entry file name contains a directory, you must include that exactly.
+            </summary>
+            <param name="fileName">The filename of the Manifest entry.</param>
+            <param name="outputDirectory">The directory to extract the files to. Otherwise it will extract them at the current directory.</param>
             <param name="preserveDirectories">Whether or not to create the directories from a filename. If a filename was Community\Bus_loadscreen_800x600.bmp, Community\ would or wouldn't be created depending on this parameter. true = create it, false = strip it.</param>
         </member>
         <member name="T:Sims.Far.Manifest">
