@@ -13,7 +13,7 @@
   <PropertyGroup>
     <DocumentationFile>Sims.Far.xml</DocumentationFile>
     <Description>A library to manipulate The Sims 1 .far files.</Description>
-    <PackageReleaseNotes>Add a public stream instance variable to the far file.</PackageReleaseNotes>
+    <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +21,10 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sims.Far.Exceptions\Sims.Far.Exceptions.csproj" />
   </ItemGroup>
 
 </Project>

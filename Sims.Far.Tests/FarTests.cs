@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Linq;
+using Sims.Far.Exceptions;
 
 namespace Sims.Far.Tests
 {
@@ -39,6 +40,9 @@ namespace Sims.Far.Tests
                 for (int i = 0; i < 144; i++)
                     Assert.AreEqual(farFs.ReadByte(), bytes[i]);
             }
+
+            var fail = "blahblahblah";
+            Assert.ThrowsException<ManifestEntryNotFoundException>(() => far.GetBytes(fail));
         }
 
         [TestMethod]

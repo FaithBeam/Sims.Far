@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using Sims.Far.Exceptions;
 
 namespace Sims.Far
 {
@@ -72,7 +72,7 @@ namespace Sims.Far
             }
         }
 
-        private ManifestEntry ParseManifestEntry(FileStream stream)
+        private ManifestEntry ParseManifestEntry(Stream stream)
         {
             var bytes = new byte[4];
             var manifestEntry = new ManifestEntry();
@@ -103,7 +103,10 @@ namespace Sims.Far
         /// <returns>A byte array of the content in the far.</returns>
         public byte[] GetBytes(string filename)
         {
-            return GetBytes(Manifest.ManifestEntries.FirstOrDefault(m => m.Filename == filename));
+            var entry = Manifest.ManifestEntries.FirstOrDefault(m => m.Filename == filename);
+            if (entry == null)
+                throw new ManifestEntryNotFoundException($"The entry could not be found, {filename}.");
+            return GetBytes(entry);
         }
 
         /// <summary>
@@ -159,8 +162,10 @@ namespace Sims.Far
             }
         }
 
-        private void ExtractEntry(FileStream stream, ManifestEntry entry, string outputDirectory, bool preserveDirectories)
+        private void ExtractEntry(Stream stream, ManifestEntry entry, string outputDirectory, bool preserveDirectories)
         {
+            if (outputDirectory.Contains(Path.DirectorySeparatorChar))
+                Directory.CreateDirectory(Path.Combine(outputDirectory, Path.GetDirectoryName(entry.Filename) ?? string.Empty));
             var bytes = new byte[entry.FileLength1];
             stream.Seek(entry.FileOffset, SeekOrigin.Begin);
             stream.Read(bytes, 0, entry.FileLength1);
