@@ -97,5 +97,15 @@ namespace Sims.Far.Tests
 
             File.Delete(_fileName);
         }
+        
+        [TestMethod]
+        public void TestExtractEverything()
+        {
+            var far = new Far(_farFile);
+            foreach (var entry in far.Manifest.ManifestEntries)
+                far.Extract(entry);
+            Assert.IsTrue(File.Exists(_fileName));
+            File.Delete(_fileName);
+        }
     }
 }

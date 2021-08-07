@@ -8,7 +8,7 @@ You can install Sims.Far as a nupkg from nuget.org.
 
 ## Usage
 
-Extracting UIGraphics.far:
+Extract Studiotown\largeback.bmp from UIGraphics.far using a file name:
 
 ```cs
 using Sims.Far;
@@ -16,63 +16,34 @@ using Sims.Far;
 void main()
 {
   var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
-  far.ParseFar();
-  far.Extract();
+  far.Extract("Studiotown\largeback.bmp");
 }
 ```
 
-Extracting UIGraphics.far to a relative UIGraphics folder:
+Extract Studiotown\largeback.bmp from UIGraphics.far using a manifest entry:
 
 ```cs
 using Sims.Far;
+using System.Linq;
 
 void main()
 {
   var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
-  far.ParseFar();
-  far.Extract(outputDirectory: @"UIGraphics\");
+  var entry = far.Manifest.ManifestEntries.FirstOrDefault(m => m.Filename == "Studiotown\largeback.bmp");
+  far.Extract(entry);
 }
 ```
 
-Extracting UIGraphics.far with an inclusive filter:
+Extract everything from UIGraphics.far:
 
 ```cs
 using Sims.Far;
 
 void main()
 {
-  var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
   var far = new Far();
-  far.ParseFar();
-  far.Extract(filter: myFiles);
-}
-```
-
-Extracting UIGraphics.far with an inclusive filter to a specified directory:
-
-```cs
-using Sims.Far;
-
-void main()
-{
-  var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
-  var far = new Far();
-  far.ParseFar();
-  far.Extract(outputDirectory: "UIGraphics", filter: myFiles);
-}
-```
-
-Extracting UIGraphics.far with an inclusive filter to a specified directory without the files relative folders:
-
-```cs
-using Sims.Far;
-
-void main()
-{
-  var myFiles = new List<string> { "Res_CPanel.h", @"Community\Bus_loadscreen_800x600.bmp" };
-  var far = new Far();
-  far.ParseFar();
-  far.Extract(outputDirectory: "UIGraphics", filter: myFiles, preserveDirectories: false);
+  foreach (var entry in far.Manifest.ManifestEntries)
+      far.Extract(entry);
 }
 ```
 
