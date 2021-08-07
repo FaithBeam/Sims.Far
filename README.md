@@ -15,8 +15,8 @@ using Sims.Far;
 
 void main()
 {
-  var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
-  far.Extract("Studiotown\largeback.bmp");
+    var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
+    far.Extract("Studiotown\largeback.bmp");
 }
 ```
 
@@ -28,9 +28,9 @@ using System.Linq;
 
 void main()
 {
-  var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
-  var entry = far.Manifest.ManifestEntries.FirstOrDefault(m => m.Filename == "Studiotown\largeback.bmp");
-  far.Extract(entry);
+    var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
+    var entry = far.Manifest.ManifestEntries.FirstOrDefault(m => m.Filename == "Studiotown\largeback.bmp");
+    far.Extract(entry);
 }
 ```
 
@@ -41,9 +41,9 @@ using Sims.Far;
 
 void main()
 {
-  var far = new Far();
-  foreach (var entry in far.Manifest.ManifestEntries)
-      far.Extract(entry);
+    var far = new Far();
+    foreach (var entry in far.Manifest.ManifestEntries)
+        far.Extract(entry);
 }
 ```
 
