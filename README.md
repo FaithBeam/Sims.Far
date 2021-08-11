@@ -41,7 +41,7 @@ using Sims.Far;
 
 void main()
 {
-    var far = new Far();
+    var far = new Far(@"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far");
     foreach (var entry in far.Manifest.ManifestEntries)
         far.Extract(entry);
 }
