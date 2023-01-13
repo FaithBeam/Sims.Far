@@ -49,4 +49,4 @@ void main()
 
 ## Credits
 
-[http://simtech.sourceforge.net/tech/far.html](http://simtech.sourceforge.net/tech/far.html)
+[https://web.archive.org/web/20220410061532/https://simtech.sourceforge.net/tech/far.html](http://simtech.sourceforge.net/tech/far.html)
