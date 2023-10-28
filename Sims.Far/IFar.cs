@@ -47,5 +47,13 @@
         /// <param name="entry"></param>
         /// <returns>A byte array of the content in the far.</returns>
         byte[] GetBytes(ManifestEntry entry);
+
+        /// <summary>
+        /// Try to return a byte array for a file name in the fire. The file name must be exact.
+        /// </summary>
+        /// <param name="filename">The name of the file in the far</param>
+        /// <param name="bytes">A byte array to receive the bytes</param>
+        /// <returns>Whether or not the file was found in the .far</returns>
+        bool TryGetBytes(string filename, out byte[] bytes);
     }
 }

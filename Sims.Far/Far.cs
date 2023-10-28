@@ -110,6 +110,25 @@ namespace Sims.Far
         }
 
         /// <summary>
+        /// Try to return a byte array for a file name in the fire. The file name must be exact.
+        /// </summary>
+        /// <param name="filename">The name of the file in the far</param>
+        /// <param name="bytes">A byte array to receive the bytes</param>
+        /// <returns>Whether or not the file was found in the .far</returns>
+        public bool TryGetBytes(string filename, out byte[] bytes)
+        {
+            var entry = Manifest.ManifestEntries.FirstOrDefault(m => m.Filename == filename);
+            if (string.IsNullOrWhiteSpace(filename))
+            {
+                bytes = null;
+                return false;
+            }
+
+            bytes = GetBytes(entry);
+            return true;
+        }
+
+        /// <summary>
         /// Return a byte array for the given Manifest entry.
         /// </summary>
         /// <param name="entry"></param>

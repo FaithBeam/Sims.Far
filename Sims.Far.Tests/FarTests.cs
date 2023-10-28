@@ -46,6 +46,20 @@ namespace Sims.Far.Tests
         }
 
         [TestMethod]
+        public void TestTryGetBytesByFileName()
+        {
+            var far = new Far(_farFile);
+            far.Extract(_fileName);
+            if (!far.TryGetBytes(_fileName, out var bytes)) Assert.Fail();
+            using (var farFs = new FileStream(_farFile, FileMode.Open, FileAccess.Read))
+            {
+                farFs.Seek(16, SeekOrigin.Begin);
+                for (var i = 0; i < 144; i++)
+                    Assert.AreEqual(farFs.ReadByte(), bytes[i]);
+            }
+        }
+
+        [TestMethod]
         public void TestGetBytesByManifestEntry()
         {
             var far = new Far(_farFile);
