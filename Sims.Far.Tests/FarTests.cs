@@ -26,7 +26,26 @@ namespace Sims.Far.Tests
             Assert.AreEqual(far.Manifest.ManifestEntries[0].FilenameLength, 8);
             Assert.AreEqual(far.Manifest.ManifestEntries[0].FileOffset, 16);
         }
-
+        
+        [TestMethod]
+        public void TestParseFar_Alt()
+        {
+            var far = new Far
+            {
+                PathToFar = _farFile
+            };
+            far.ParseFar();
+            Assert.AreEqual(far.Signature, "FAR!byAZ");
+            Assert.AreEqual(far.Version, 1);
+            Assert.AreEqual(far.ManifestOffset, 160);
+            Assert.AreEqual(far.Manifest.NumberOfFiles, 1);
+            Assert.AreEqual(far.Manifest.ManifestEntries.Count, 1);
+            Assert.AreEqual(far.Manifest.ManifestEntries[0].FileLength1, 144);
+            Assert.AreEqual(far.Manifest.ManifestEntries[0].FileLength2, 144);
+            Assert.AreEqual(far.Manifest.ManifestEntries[0].Filename, _fileName);
+            Assert.AreEqual(far.Manifest.ManifestEntries[0].FilenameLength, 8);
+            Assert.AreEqual(far.Manifest.ManifestEntries[0].FileOffset, 16);
+        }
 
         [TestMethod]
         public void TestGetBytesByFileName()

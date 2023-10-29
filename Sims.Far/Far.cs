@@ -12,7 +12,10 @@ namespace Sims.Far
     /// </summary>
     public class Far : IFar
     {
-        private readonly string _pathToFar;
+        /// <summary>
+        /// Path to the far file to work with.
+        /// </summary>
+        public string PathToFar;
         /// <summary>
         /// The signature is an eight-byte string, consisting literally of "FAR!byAZ" (without the quotes).
         /// </summary>
@@ -37,13 +40,23 @@ namespace Sims.Far
         /// <param name="pathToFar">The path to the far file.</param>
         public Far(string pathToFar)
         {
-            _pathToFar = pathToFar;
+            PathToFar = pathToFar;
             ParseFar();
         }
 
-        private void ParseFar()
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public Far()
         {
-            using (var stream = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read))
+        }
+
+        /// <summary>
+        /// Parse the far file
+        /// </summary>
+        public void ParseFar()
+        {
+            using (var stream = new FileStream(PathToFar, FileMode.Open, FileAccess.Read))
             {
                 var bytes = new byte[8];
                 stream.Read(bytes, 0, 8);
@@ -136,7 +149,7 @@ namespace Sims.Far
         public byte[] GetBytes(ManifestEntry entry)
         {
             var bytes = new byte[entry.FileLength1];
-            using (var stream = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream(PathToFar, FileMode.Open, FileAccess.Read))
             {
                 stream.Seek(entry.FileOffset, SeekOrigin.Begin);
                 stream.Read(bytes, 0, entry.FileLength1);
@@ -155,7 +168,7 @@ namespace Sims.Far
             if (!string.IsNullOrWhiteSpace(outputDirectory))
                 Directory.CreateDirectory(outputDirectory);
 
-            using (var stream = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream(PathToFar, FileMode.Open, FileAccess.Read))
             {
                 ExtractEntry(stream, entry, outputDirectory, preserveDirectories);
             }
@@ -172,7 +185,7 @@ namespace Sims.Far
             if (!string.IsNullOrWhiteSpace(outputDirectory))
                 Directory.CreateDirectory(outputDirectory);
 
-            using (var stream = new FileStream(_pathToFar, FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream(PathToFar, FileMode.Open, FileAccess.Read))
             {
                 foreach (var entry in Manifest.ManifestEntries.Where(m => m.Filename == fileName))
                 {

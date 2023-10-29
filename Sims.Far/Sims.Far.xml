@@ -9,6 +9,11 @@
             The FAR format (.far files) are used to bundle (archive) multiple files together. All numeric values in the header and manifest are stored in little-endian order(least significant byte first).
             </summary>
         </member>
+        <member name="F:Sims.Far.Far.PathToFar">
+            <summary>
+            Path to the far file to work with.
+            </summary>
+        </member>
         <member name="P:Sims.Far.Far.Signature">
             <summary>
             The signature is an eight-byte string, consisting literally of "FAR!byAZ" (without the quotes).
@@ -35,6 +40,16 @@
             The Far constructor.
             </summary>
             <param name="pathToFar">The path to the far file.</param>
+        </member>
+        <member name="M:Sims.Far.Far.#ctor">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="M:Sims.Far.Far.ParseFar">
+            <summary>
+            Parse the far file
+            </summary>
         </member>
         <member name="M:Sims.Far.Far.GetBytes(System.String)">
             <summary>
