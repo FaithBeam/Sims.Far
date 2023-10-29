@@ -22,6 +22,11 @@
         int Version { get; set; }
 
         /// <summary>
+        /// Path to the far file to work with.
+        /// </summary>
+        string PathToFar { get; set; }
+
+        /// <summary>
         /// Extract a file by its manifest entry from the far.
         /// </summary>
         /// <param name="entry">The manifest entry to extract.</param>
@@ -56,6 +61,9 @@
         /// <returns>Whether or not the file was found in the .far</returns>
         bool TryGetBytes(string filename, out byte[] bytes);
 
+        /// <summary>
+        /// Parse the far file
+        /// </summary>
         void ParseFar();
     }
 }

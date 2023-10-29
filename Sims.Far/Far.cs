@@ -15,7 +15,7 @@ namespace Sims.Far
         /// <summary>
         /// Path to the far file to work with.
         /// </summary>
-        public string PathToFar;
+        public string PathToFar { get; set; }
         /// <summary>
         /// The signature is an eight-byte string, consisting literally of "FAR!byAZ" (without the quotes).
         /// </summary>

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Version>3.2.0</Version>
+    <Version>3.2.1</Version>
     <Authors>FaithBeam</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/FaithBeam/Sims.Far</PackageProjectUrl>
@@ -13,8 +13,7 @@
   <PropertyGroup>
     <DocumentationFile>Sims.Far.xml</DocumentationFile>
     <Description>A library to manipulate The Sims 1 .far files.</Description>
-    <PackageReleaseNotes>Add a default constructor
-Make the ParseFar method public to be used with the default constructor</PackageReleaseNotes>
+    <PackageReleaseNotes>Pull PathToFar into the interface</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
