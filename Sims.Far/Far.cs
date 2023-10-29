@@ -130,8 +130,13 @@ namespace Sims.Far
         /// <returns>Whether or not the file was found in the .far</returns>
         public bool TryGetBytes(string filename, out byte[] bytes)
         {
-            var entry = Manifest.ManifestEntries.FirstOrDefault(m => m.Filename == filename);
             if (string.IsNullOrWhiteSpace(filename))
+            {
+                bytes = null;
+                return false;
+            }
+            var entry = Manifest.ManifestEntries.FirstOrDefault(m => m.Filename == filename);
+            if (entry is null)
             {
                 bytes = null;
                 return false;

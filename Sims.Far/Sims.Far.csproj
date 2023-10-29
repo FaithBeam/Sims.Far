@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Version>3.2.1</Version>
+    <Version>3.2.2</Version>
     <Authors>FaithBeam</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/FaithBeam/Sims.Far</PackageProjectUrl>
@@ -13,7 +13,7 @@
   <PropertyGroup>
     <DocumentationFile>Sims.Far.xml</DocumentationFile>
     <Description>A library to manipulate The Sims 1 .far files.</Description>
-    <PackageReleaseNotes>Pull PathToFar into the interface</PackageReleaseNotes>
+    <PackageReleaseNotes>Add check for null on the entry in the trygetbytes method</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
