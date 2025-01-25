@@ -15,7 +15,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DocumentationFile>Sims.Far.xml</DocumentationFile>
     <Description>A library to create and extract The Sims 1 .far files.</Description>
   </PropertyGroup>
 
