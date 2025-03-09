@@ -1,4 +1,4 @@
-﻿using System.Text;
+﻿using NUnit.Framework;
 
 namespace Sims.Far.Tests;
 
@@ -8,6 +8,7 @@ public class Tests
     public void Read_far()
     {
         var far = Far.Read(FarFilePath);
+        ;
     }
 
     [Test]
@@ -17,7 +18,7 @@ public class Tests
         far.Write("newfar.far");
         var oldFarBytes = await File.ReadAllBytesAsync(FarFilePath);
         var newFarBytes = await File.ReadAllBytesAsync("newfar.far");
-        await Assert.That(oldFarBytes).IsEquivalentTo(newFarBytes);
+        Assert.That(newFarBytes, Is.EqualTo(oldFarBytes));
     }
 
     [Test]
@@ -49,10 +50,10 @@ public class Tests
     public void Create_new_far()
     {
         var files = new List<FarFile> { new("Some file name", "Some content"u8.ToArray()) };
-        var far = new Far(files);
+        var far = new Far(FarVersion._1A, files);
         far.Write("newfar.far");
     }
 
     private const string FarFilePath =
-        @"C:\Program Files (x86)\Maxis\The Sims\UIGraphics\UIGraphics.far";
+        @"C:\Program Files (x86)\Steam\steamapps\common\The Sims Legacy Collection\UIGraphics\UIGraphics.far";
 }

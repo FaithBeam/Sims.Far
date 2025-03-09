@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Sims.Far._3;
 
 namespace Sims.Far;
 
@@ -18,10 +20,10 @@ namespace Sims.Far;
 // |  var   |  var   |     File N       |
 // |  var   |  var   |    Manifest      |
 // +--------+--------+------------------+
-public class Far(List<FarFile> farFiles)
+public class Far(FarVersion version, List<FarFile> farFiles)
 {
     private static string Signature => "FAR!byAZ";
-    private static int Version => 1;
+    public FarVersion Version { get; set; } = version;
     public List<FarFile> Files { get; set; } = farFiles;
 
     /// <summary>
@@ -33,25 +35,38 @@ public class Far(List<FarFile> farFiles)
         using var fs = new FileStream(path, FileMode.Create);
         using var bw = new BinaryWriter(fs, Encoding.UTF8);
         bw.Write(Signature.Select(x => x).ToArray());
-        bw.Write(Version);
+        switch (Version)
+        {
+            case FarVersion._1A:
+            case FarVersion._1B:
+                bw.Write(1);
+                break;
+            case FarVersion._3:
+                throw new SimsFarException("Cannot write v3 far files.");
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
 
         // save manifestoffset position to be written later
         var manifestOffsetPos = (int)bw.BaseStream.Position;
         bw.BaseStream.Position += 4;
 
         // write files and calculate manifest entries
-        var manifestEntries = new List<ManifestEntry>();
+        var manifestEntries = new List<BaseManifestEntry>();
         foreach (var ff in Files)
         {
-            manifestEntries.Add(
-                new ManifestEntry(
-                    ff.Bytes.Length,
-                    ff.Bytes.Length,
-                    (int)bw.BaseStream.Position,
-                    ff.Name
-                )
-            );
-            ff.Write(bw);
+            switch (Version)
+            {
+                case FarVersion._1A:
+                case FarVersion._1B:
+                    ff.Write(bw);
+                    break;
+                case FarVersion._3:
+                    ff.Write(bw, isV3: true, compress: true);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         // write manifestoffset
@@ -69,19 +84,39 @@ public class Far(List<FarFile> farFiles)
     {
         using var fs = File.OpenRead(pathToFar);
         var br = new BinaryReader(fs, Encoding.UTF8);
-        // skip to manifest offset because signature and version are always the same
-        br.BaseStream.Position = 12;
+        // skip to version offset because signature is always the same
+        br.BaseStream.Position = 8;
+        var version = br.ReadInt32() switch
+        {
+            1 => FarVersion._1A,
+            3 => FarVersion._3,
+            _ => throw new ArgumentOutOfRangeException(),
+        };
         var manifestOffset = br.ReadInt32();
         br.BaseStream.Seek(manifestOffset, SeekOrigin.Begin);
-        var manifest = Manifest.Read(br);
+        var manifest = Manifest.Read(version, br);
         var files = manifest
             .Entries.Select(x =>
             {
                 fs.Seek(x.FileOffset, SeekOrigin.Begin);
-                return new FarFile(x.Filename, br.ReadBytes(x.FileLength));
+                if (x is _3.ManifestEntry v3Me)
+                {
+                    return new FarFile(
+                        x.Filename,
+                        TsoStream.Read(br, v3Me.Compressed, v3Me.DecompressedFileSize)
+                    );
+                }
+
+                return new FarFile(x.Filename, br.ReadBytes(x.CompressedFileSize));
             })
             .ToList();
-        return new Far(files);
+
+        // correct the far version to 1B
+        if (version == FarVersion._1A && manifest.Entries.Any(x => x is _1B.ManifestEntry))
+        {
+            version = FarVersion._1B;
+        }
+        return new Far(version, files);
     }
 }
 
@@ -95,7 +130,18 @@ public class FarFile(string name, byte[] bytes)
 
     public void Extract(string path) => File.WriteAllBytes(path, Bytes);
 
-    internal void Write(BinaryWriter stream) => stream.Write(Bytes);
+    internal void Write(BinaryWriter bw, bool isV3 = false, bool compress = false)
+    {
+        if (isV3)
+        {
+            TsoStream.Write(bw, compress, Bytes);
+            // bw.Write(Bytes);
+        }
+        else
+        {
+            bw.Write(Bytes);
+        }
+    }
 }
 
 //                    Manifest
@@ -111,9 +157,9 @@ public class FarFile(string name, byte[] bytes)
 internal class Manifest
 {
     private int NumberOfFiles { get; }
-    internal List<ManifestEntry> Entries { get; }
+    internal List<BaseManifestEntry> Entries { get; }
 
-    internal Manifest(int numberOfFiles, List<ManifestEntry> entries)
+    internal Manifest(int numberOfFiles, List<BaseManifestEntry> entries)
     {
         NumberOfFiles = numberOfFiles;
         Entries = entries;
@@ -128,60 +174,65 @@ internal class Manifest
         }
     }
 
-    internal static Manifest Read(BinaryReader br)
+    internal static Manifest Read(FarVersion farVersion, BinaryReader br)
     {
         var numberOfFiles = br.ReadInt32();
-        var entries = new List<ManifestEntry>();
+        var entries = new List<BaseManifestEntry>();
         for (var i = 0; i < numberOfFiles; i++)
         {
-            entries.Add(ManifestEntry.Read(br));
+            entries.Add(ManifestEntryReader.Read(farVersion, br));
         }
         return new Manifest(numberOfFiles, entries);
     }
 }
 
-//              Manifest Entry
-// +--------+--------+--------------------+
-// | Offset |  Size  |    Value           |
-// +--------+--------+--------------------+
-// |   0    |   4    |    File length     |
-// |   4    |   4    |    File length     |
-// |   8    |   4    |    File offset     |
-// |  12    |   4    |    Filename length |
-// |  16    |  var   |    Filename        |
-// +--------+--------+--------------------+
-internal class ManifestEntry
+internal static class ManifestEntryReader
 {
-    internal int FileLength { get; }
-    private int FileLength2 { get; }
+    internal static BaseManifestEntry Read(FarVersion farVersion, BinaryReader br) =>
+        farVersion switch
+        {
+            FarVersion._1A when IsFar1B(br) => _1B.ManifestEntry.Read(br),
+            FarVersion._1A => _1A.ManifestEntry.Read(br),
+            FarVersion._1B => _1B.ManifestEntry.Read(br),
+            FarVersion._3 => _3.ManifestEntry.Read(br),
+            _ => throw new ArgumentOutOfRangeException(nameof(farVersion)),
+        };
+
+    /// <summary>
+    /// Determine if this version 1 Far is B
+    /// </summary>
+    /// <param name="br"></param>
+    /// <returns></returns>
+    private static bool IsFar1B(BinaryReader br)
+    {
+        var originalPosition = br.BaseStream.Position;
+        br.BaseStream.Position += 14;
+        var isB = br.ReadInt16() > 0;
+        br.BaseStream.Position = originalPosition;
+        return isB;
+    }
+}
+
+internal abstract class BaseManifestEntry
+{
+    internal int DecompressedFileSize { get; }
+    internal int CompressedFileSize { get; }
     internal int FileOffset { get; }
-    private int FileNameLength => Filename.Length;
+    internal int FileNameLength => Filename.Length;
     internal string Filename { get; }
 
-    internal ManifestEntry(int fileLength, int fileLength2, int fileOffset, string fileName)
+    internal BaseManifestEntry(
+        int decompressedFileSize,
+        int compressedFileSize,
+        int fileOffset,
+        string fileName
+    )
     {
-        FileLength = fileLength;
-        FileLength2 = fileLength2;
+        DecompressedFileSize = decompressedFileSize;
+        CompressedFileSize = compressedFileSize;
         FileOffset = fileOffset;
         Filename = fileName;
     }
 
-    internal void Write(BinaryWriter stream)
-    {
-        stream.Write(FileLength);
-        stream.Write(FileLength2);
-        stream.Write(FileOffset);
-        stream.Write(FileNameLength);
-        stream.Write(Filename.Select(x => x).ToArray());
-    }
-
-    internal static ManifestEntry Read(BinaryReader br)
-    {
-        var fileLength = br.ReadInt32();
-        var fileLength2 = br.ReadInt32();
-        var fileOffset = br.ReadInt32();
-        var fileNameLength = br.ReadInt32();
-        var fileName = string.Concat(br.ReadChars(fileNameLength));
-        return new ManifestEntry(fileLength, fileLength2, fileOffset, fileName);
-    }
+    internal abstract void Write(BinaryWriter stream);
 }
