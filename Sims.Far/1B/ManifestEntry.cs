@@ -15,7 +15,7 @@ internal class ManifestEntry(
         stream.Write(DecompressedFileSize);
         stream.Write(CompressedFileSize);
         stream.Write(FileOffset);
-        stream.Write(FileNameLength);
+        stream.Write((short)FileNameLength);
         stream.Write(Filename.Select(x => x).ToArray());
     }
 

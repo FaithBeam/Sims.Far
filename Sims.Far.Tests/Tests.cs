@@ -25,6 +25,10 @@ public class Tests
     public void Extract_files()
     {
         var tmpDir = "tmpDir";
+        if (Directory.Exists(tmpDir))
+        {
+            Directory.Delete(tmpDir, true);
+        }
         if (!Directory.Exists(tmpDir))
         {
             Directory.CreateDirectory(tmpDir);
@@ -54,6 +58,5 @@ public class Tests
         far.Write("newfar.far");
     }
 
-    private const string FarFilePath =
-        @"C:\Program Files (x86)\Steam\steamapps\common\The Sims Legacy Collection\UIGraphics\UIGraphics.far";
+    private const string FarFilePath = @"1a.far";
 }
