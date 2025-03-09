@@ -5,15 +5,29 @@ using System.IO;
 
 namespace Sims.Far._3;
 
-/// <summary>
-/// Represents a decompresser that can decompress files in a FAR3
-/// archive. If you have some kind of need to understand this code, go to:
-/// http://wiki.niotso.org/RefPack
-/// The code in this class was ported from DBPF4J:
-/// http://sc4dbpf4j.cvs.sourceforge.net/viewvc/sc4dbpf4j/DBPF4J/
-/// </summary>
+// ttps://github.com/riperiperi/FreeSO/blob/master/Other/tools/SimsLib/SimsLib/FAR3/Decompresser.cs
+
+/*This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+If a copy of the MPL was not distributed with this file, You can obtain one at
+http://mozilla.org/MPL/2.0/.
+
+The Original Code is the SimsLib.
+
+The Initial Developer of the Original Code is
+Mats 'Afr0' Vederhus. All Rights Reserved.
+
+Contributor(s):
+*/
+
 public class Decompresser
 {
+    /// <summary>
+    /// Represents a decompresser that can decompress files in a FAR3
+    /// archive. If you have some kind of need to understand this code, go to:
+    /// http://wiki.niotso.org/RefPack
+    /// The code in this class was ported from DBPF4J:
+    /// http://sc4dbpf4j.cvs.sourceforge.net/viewvc/sc4dbpf4j/DBPF4J/
+    /// </summary>
     private long m_CompressedSize = 0;
     private long m_DecompressedSize = 0;
 
