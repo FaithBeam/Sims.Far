@@ -58,10 +58,29 @@ public class Far(FarVersion version, List<FarFile> farFiles)
             switch (Version)
             {
                 case FarVersion._1A:
+                    manifestEntries.Add(
+                        new _1A.ManifestEntry(
+                            ff.Bytes.Length,
+                            ff.Bytes.Length,
+                            (int)bw.BaseStream.Position,
+                            ff.Name
+                        )
+                    );
+                    ff.Write(bw);
+                    break;
                 case FarVersion._1B:
+                    manifestEntries.Add(
+                        new _1B.ManifestEntry(
+                            ff.Bytes.Length,
+                            ff.Bytes.Length,
+                            (int)bw.BaseStream.Position,
+                            ff.Name
+                        )
+                    );
                     ff.Write(bw);
                     break;
                 case FarVersion._3:
+                    // new _3.ManifestEntry(ff.Bytes.Length, ff.Bytes.Length)
                     ff.Write(bw, isV3: true, compress: true);
                     break;
                 default:
