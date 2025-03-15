@@ -4,7 +4,7 @@ A library to extract and create The Sims 1 .far files.
 
 ## Installation
 
-You can install Sims.Far as a nupkg from nuget.org.
+You can install Sims.Far as a nupkg from nuget.org. This library targets netstandard2.0 so you need .NET Framework >= 4.6.2 OR .NET/.NET Core >= 2.0.
 
 ## Usage
 
@@ -45,6 +45,17 @@ static void Main(string[] args)
     var far = new Far(files);
     far.Write("newfar.far");
 }
+```
+
+## Development
+
+Install the latest [Visual Studio Community Edition](https://visualstudio.microsoft.com/vs/community/) or [Jetbrains Rider](https://www.jetbrains.com/rider/) (both are free).
+If for some reason the latest .NET SDK isn't installed with Visual Studio or Rider, install the latest [.NET SDK](https://dotnet.microsoft.com/en-us/download).
+
+```bash
+git clone https://github.com/FaithBeam/Sims.Far
+cd Sims.Far
+Open Sims.Far.sln with Visual Studio or Rider
 ```
 
 ## Credits
