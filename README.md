@@ -4,7 +4,9 @@ A library to extract and create The Sims 1 .far files.
 
 ## Installation
 
-You can install Sims.Far as a nupkg from nuget.org. This library targets netstandard2.0 so you need .NET Framework >= 4.6.2 OR .NET/.NET Core >= 2.0.
+You can install Sims.Far as a nupkg from nuget.org.
+
+This library targets netstandard2.0 so you need .NET Framework >= 4.6.2 OR .NET/.NET Core >= 2.0.
 
 ## Usage
 
